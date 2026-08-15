@@ -1,0 +1,112 @@
+name: Compiler Leader Pharma Manager Pro Windows V1.3.8
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Creer application Windows
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path windows-app | Out-Null
+
+          @'
+          {
+            "name": "leader-pharma-manager-pro",
+            "version": "1.3.8",
+            "description": "Leader Pharma Manager Pro Windows V1.3.8",
+            "main": "main.js",
+            "scripts": {
+              "build": "electron-builder --win"
+            },
+            "devDependencies": {
+              "electron": "^31.0.0",
+              "electron-builder": "^24.13.3"
+            },
+            "build": {
+              "appId": "org.leaderpharma.managerpro",
+              "productName": "Leader Pharma Manager Pro",
+              "win": {
+                "target": [
+                  "nsis",
+                  "portable"
+                ]
+              }
+            }
+          }
+          '@ | Set-Content -Encoding UTF8 windows-app/package.json
+
+          @'
+          const { app, BrowserWindow, shell } = require('electron');
+
+          function createWindow() {
+            const win = new BrowserWindow({
+              width: 1280,
+              height: 800,
+              minWidth: 900,
+              minHeight: 600,
+              autoHideMenuBar: true,
+              webPreferences: {
+                contextIsolation: true,
+                nodeIntegration: false
+              }
+            });
+
+            win.setTitle('Leader Pharma Manager Pro V1.3.8');
+
+            win.loadURL(
+              'https://frilunga-gif.github.io/leader-pharma-manager-web/'
+            );
+
+            win.webContents.setWindowOpenHandler(({ url }) => {
+              shell.openExternal(url);
+              return { action: 'deny' };
+            });
+          }
+
+          app.whenReady().then(() => {
+            createWindow();
+
+            app.on('activate', () => {
+              if (BrowserWindow.getAllWindows().length === 0) {
+                createWindow();
+              }
+            });
+          });
+
+          app.on('window-all-closed', () => {
+            if (process.platform !== 'darwin') {
+              app.quit();
+            }
+          });
+          '@ | Set-Content -Encoding UTF8 windows-app/main.js
+
+      - name: Installer les dependances Windows
+        shell: powershell
+        run: |
+          cd windows-app
+          npm install
+
+      - name: Compiler Windows V1.3.8
+        shell: powershell
+        run: |
+          cd windows-app
+          npm run build
+
+      - name: Publier Leader Pharma Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: Leader-Pharma-Manager-Pro-Windows-V1.3.8
+          path: windows-app/dist/*
+          if-no-files-found: error
