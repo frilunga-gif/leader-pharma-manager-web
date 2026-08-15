@@ -1,0 +1,46 @@
+name: Publier Leader Pharma Web V1.3.8
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: leader-pharma-web
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Extraire la version Web
+        run: |
+          rm -rf web-dist
+          mkdir -p web-dist
+          unzip -q "LeaderPharmaManagerPro-WEB-V1.3.8-COMPLETE.zip" -d web-dist
+          rm -rf web-dist/.github
+          test -f web-dist/index.html
+          test -f web-dist/app.js
+          test -f web-dist/styles.css
+
+      - name: Configurer GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparer les fichiers Web
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web-dist
+
+      - name: Publier le site Web
+        id: deployment
+        uses: actions/deploy-pages@v4
