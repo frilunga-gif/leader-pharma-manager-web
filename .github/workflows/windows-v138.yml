@@ -17,18 +17,21 @@ jobs:
           node-version: '20'
 
       - name: Creer application Windows
-        shell: powershell
+        shell: bash
         run: |
-          New-Item -ItemType Directory -Force -Path windows-app | Out-Null
+          rm -rf windows-app
+          mkdir -p windows-app
 
-          @'
+          cat > windows-app/package.json <<'EOF'
           {
             "name": "leader-pharma-manager-pro",
             "version": "1.3.8",
             "description": "Leader Pharma Manager Pro Windows V1.3.8",
             "main": "main.js",
+            "author": "Leader Pharma",
+            "license": "UNLICENSED",
             "scripts": {
-              "build": "electron-builder --win"
+              "build": "electron-builder --win nsis portable"
             },
             "devDependencies": {
               "electron": "^31.0.0",
@@ -37,17 +40,20 @@ jobs:
             "build": {
               "appId": "org.leaderpharma.managerpro",
               "productName": "Leader Pharma Manager Pro",
-              "win": {
-                "target": [
-                  "nsis",
-                  "portable"
-                ]
+              "directories": {
+                "output": "dist"
+              },
+              "nsis": {
+                "oneClick": false,
+                "allowToChangeInstallationDirectory": true,
+                "createDesktopShortcut": true,
+                "createStartMenuShortcut": true
               }
             }
           }
-          '@ | Set-Content -Encoding UTF8 windows-app/package.json
+          EOF
 
-          @'
+          cat > windows-app/main.js <<'EOF'
           const { app, BrowserWindow, shell } = require('electron');
 
           function createWindow() {
@@ -90,16 +96,19 @@ jobs:
               app.quit();
             }
           });
-          '@ | Set-Content -Encoding UTF8 windows-app/main.js
+          EOF
+
+          echo "Verification package.json"
+          cat windows-app/package.json
 
       - name: Installer les dependances Windows
-        shell: powershell
+        shell: bash
         run: |
           cd windows-app
           npm install
 
       - name: Compiler Windows V1.3.8
-        shell: powershell
+        shell: bash
         run: |
           cd windows-app
           npm run build
