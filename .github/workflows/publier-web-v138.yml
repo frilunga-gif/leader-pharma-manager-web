@@ -2,12 +2,9 @@ name: Publier Leader Pharma Manager Pro V1.3.8 Web
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -27,7 +24,7 @@ jobs:
       - name: Recuperer le depot
         uses: actions/checkout@v4
 
-      - name: Preparer le site Leader Pharma
+      - name: Preparer les fichiers Web
         run: |
           rm -rf site
           mkdir -p site
@@ -37,26 +34,24 @@ jobs:
           elif [ -d "source/www" ]; then
             cp -R source/www/. site/
           else
-            echo "Recherche du dossier www..."
             WWW_DIR=$(find . -type d -name "www" | head -n 1)
 
             if [ -z "$WWW_DIR" ]; then
-              echo "ERREUR : dossier www introuvable."
+              echo "ERREUR : dossier www introuvable"
               exit 1
             fi
 
-            echo "Dossier trouve : $WWW_DIR"
             cp -R "$WWW_DIR"/. site/
           fi
 
           if [ ! -f "site/index.html" ]; then
-            echo "ERREUR : index.html introuvable."
+            echo "ERREUR : index.html introuvable"
             exit 1
           fi
 
           touch site/.nojekyll
 
-          echo "Contenu Web pret :"
+          echo "Leader Pharma Manager Pro Web pret"
           ls -la site
 
       - name: Configurer GitHub Pages
