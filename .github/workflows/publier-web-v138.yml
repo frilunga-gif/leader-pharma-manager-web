@@ -1,0 +1,72 @@
+name: Publier Leader Pharma Manager Pro V1.3.8 Web
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Preparer le site Leader Pharma
+        run: |
+          rm -rf site
+          mkdir -p site
+
+          if [ -d "www" ]; then
+            cp -R www/. site/
+          elif [ -d "source/www" ]; then
+            cp -R source/www/. site/
+          else
+            echo "Recherche du dossier www..."
+            WWW_DIR=$(find . -type d -name "www" | head -n 1)
+
+            if [ -z "$WWW_DIR" ]; then
+              echo "ERREUR : dossier www introuvable."
+              exit 1
+            fi
+
+            echo "Dossier trouve : $WWW_DIR"
+            cp -R "$WWW_DIR"/. site/
+          fi
+
+          if [ ! -f "site/index.html" ]; then
+            echo "ERREUR : index.html introuvable."
+            exit 1
+          fi
+
+          touch site/.nojekyll
+
+          echo "Contenu Web pret :"
+          ls -la site
+
+      - name: Configurer GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Televerser le site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publier Leader Pharma Manager Pro
+        id: deployment
+        uses: actions/deploy-pages@v4
