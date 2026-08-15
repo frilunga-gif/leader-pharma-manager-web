@@ -24,34 +24,39 @@ jobs:
       - name: Recuperer le depot
         uses: actions/checkout@v4
 
-      - name: Preparer les fichiers Web
+      - name: Extraire Leader Pharma Web V1.3.8
         run: |
-          rm -rf site
-          mkdir -p site
+          rm -rf extraction site
+          mkdir -p extraction site
 
-          if [ -d "www" ]; then
-            cp -R www/. site/
-          elif [ -d "source/www" ]; then
-            cp -R source/www/. site/
-          else
-            WWW_DIR=$(find . -type d -name "www" | head -n 1)
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name 'LeaderPharmaManagerPro-WEB-V1.3.8-COMPLETE*.zip' | head -n 1)
 
-            if [ -z "$WWW_DIR" ]; then
-              echo "ERREUR : dossier www introuvable"
-              exit 1
-            fi
-
-            cp -R "$WWW_DIR"/. site/
-          fi
-
-          if [ ! -f "site/index.html" ]; then
-            echo "ERREUR : index.html introuvable"
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERREUR : ZIP WEB V1.3.8 introuvable"
             exit 1
           fi
 
+          echo "ZIP trouve : $ZIP_FILE"
+
+          unzip -q "$ZIP_FILE" -d extraction
+
+          INDEX_FILE=$(find extraction -type f -name "index.html" | head -n 1)
+
+          if [ -z "$INDEX_FILE" ]; then
+            echo "ERREUR : index.html introuvable dans le ZIP"
+            find extraction -maxdepth 4 -type f
+            exit 1
+          fi
+
+          WEB_DIR=$(dirname "$INDEX_FILE")
+
+          echo "Application Web trouvee dans : $WEB_DIR"
+
+          cp -R "$WEB_DIR"/. site/
+
           touch site/.nojekyll
 
-          echo "Leader Pharma Manager Pro Web pret"
+          echo "Contenu pret pour GitHub Pages :"
           ls -la site
 
       - name: Configurer GitHub Pages
